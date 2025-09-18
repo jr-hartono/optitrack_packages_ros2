@@ -7,11 +7,13 @@ add_compile_options(-g)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(optitrack_multiplexer_ros2_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 set(DEPENDENCIES
   rclcpp
   builtin_interfaces
   optitrack_multiplexer_ros2_msgs
+  tf2_ros
 )
 
 include_directories(include/optitrack_multiplexer_ros2)

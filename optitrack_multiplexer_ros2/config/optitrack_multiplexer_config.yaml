@@ -22,3 +22,7 @@ optitrack_multiplexer_node:
     topic_unlabeled_markers: "unlabeled_markers"
     # verbose metrics 
     verbose: false
+    # publish ros2 tf
+    publish_tf: true
+    # world frame to publish the ros2 tf into
+    world_frame: "world"

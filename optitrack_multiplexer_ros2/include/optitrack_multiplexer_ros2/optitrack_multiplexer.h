@@ -1,6 +1,7 @@
 #ifndef OPTITRACK_MULTIPLEXER_CLASS_H_
 #define OPTITRACK_MULTIPLEXER_CLASS_H_
 
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "optitrack_multiplexer_ros2_msgs/msg/marker_base.hpp"
 #include "optitrack_multiplexer_ros2_msgs/msg/rigid_body_base.hpp"
 #include "optitrack_multiplexer_ros2_msgs/msg/rigid_body_stamped.hpp"
@@ -9,6 +10,7 @@
 #include "optitrack_wrapper_ros2_msgs/msg/frame_of_mocap_data.hpp"
 #include "optitrack_wrapper_ros2_msgs/srv/get_data_descriptions.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "tf2_ros/transform_broadcaster.h"
 
 #include <chrono>
 
@@ -72,6 +74,11 @@ private:
           frame_data,
       ::std::string &marker_set_name, int marker_set_id);
 
+  // publish rigid body as a ros2 tf
+  void PublishTf(
+      const rclcpp::Time &time,
+      const ::optitrack_multiplexer_ros2_msgs::msg::RigidBodyBase &rigid_body);
+
   /*---------- class variables ----------*/
 
   // topic name
@@ -83,6 +90,8 @@ private:
   bool publish_unlabeled_markers_;
   ::std::string topic_unlabeled_markers_;
   bool verbose_;
+  bool publish_tf_;
+  ::std::string world_frame_;
 
   // id of assets corresponding to the names
   ::std::vector<int> rigid_body_id_vec_;
@@ -122,6 +131,9 @@ private:
   // optitrack frame data subscriber
   ::rclcpp::Subscription<::optitrack_wrapper_ros2_msgs::msg::FrameOfMocapData>::
       SharedPtr frame_data_subscriber_;
+
+  // tf broadcaster
+  ::std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 };
 
 } // namespace optitrack_multiplexer

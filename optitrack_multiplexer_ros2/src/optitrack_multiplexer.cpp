@@ -39,6 +39,9 @@ OptitrackMultiplexer::OptitrackMultiplexer()
           topic_frame_data_, 10,
           std::bind(&OptitrackMultiplexer::FrameDataCallback, this,
                     ::std::placeholders::_1));
+
+  // initialize tf broadcaster
+  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 }
 
 void OptitrackMultiplexer::FrameDataCallback(
@@ -207,18 +210,25 @@ void OptitrackMultiplexer::FrameDataCallback(
                   total_pipeline_latency);
     }
 
+    rclcpp::Time capture_time =
+        now() - rclcpp::Duration::from_seconds(total_pipeline_latency / 1000.0);
+
     // publish rigid bodies
     for (int i = 0; i < rigid_body_publisher_id.size(); i++) {
 
       ::optitrack_multiplexer_ros2_msgs::msg::RigidBodyStamped
           rigid_body_stamped_msg = rigid_body_stamped_msgs[i];
 
-      rigid_body_stamped_msg.stamp = now();
+      rigid_body_stamped_msg.stamp = capture_time;
       rigid_body_stamped_msg.frame = frame_data->frame;
       rigid_body_stamped_msg.latency_ms = total_pipeline_latency;
 
       rigid_body_publisher_vec_[rigid_body_publisher_id[i]]->publish(
           rigid_body_stamped_msg);
+
+      if (publish_tf_) {
+        PublishTf(capture_time, rigid_body_stamped_msg.rigid_body);
+      }
     }
 
     // publish skeletons
@@ -226,12 +236,18 @@ void OptitrackMultiplexer::FrameDataCallback(
 
       ::optitrack_multiplexer_ros2_msgs::msg::SkeletonStamped
           skeleton_stamped_msg = skeleton_stamped_msgs[i];
-      skeleton_stamped_msg.stamp = now();
+      skeleton_stamped_msg.stamp = capture_time;
       skeleton_stamped_msg.frame = frame_data->frame;
       skeleton_stamped_msg.latency_ms = total_pipeline_latency;
 
       skeleton_publisher_vec_[skeleton_publisher_id[i]]->publish(
           skeleton_stamped_msg);
+
+      if (publish_tf_) {
+        for (const auto &rigid_body : skeleton_stamped_msg.rigid_bodies) {
+          PublishTf(capture_time, rigid_body);
+        }
+      }
     }
 
     // publish unlabeled markers
@@ -324,6 +340,26 @@ OptitrackMultiplexer::GetMarkerBaseMessage(
   }
 
   return markers;
+}
+
+void OptitrackMultiplexer::PublishTf(
+    const rclcpp::Time &time,
+    const ::optitrack_multiplexer_ros2_msgs::msg::RigidBodyBase &rigid_body) {
+  geometry_msgs::msg::TransformStamped t;
+
+  t.header.stamp = time;
+  t.header.frame_id = world_frame_;
+  t.child_frame_id = rigid_body.name;
+
+  t.transform.translation.x = rigid_body.pose.position.x;
+  t.transform.translation.y = rigid_body.pose.position.y;
+  t.transform.translation.z = rigid_body.pose.position.z;
+  t.transform.rotation.x = rigid_body.pose.orientation.q_x;
+  t.transform.rotation.y = rigid_body.pose.orientation.q_y;
+  t.transform.rotation.z = rigid_body.pose.orientation.q_z;
+  t.transform.rotation.w = rigid_body.pose.orientation.q_w;
+
+  tf_broadcaster_->sendTransform(t);
 }
 
 void OptitrackMultiplexer::InitializeRigidBodyPublishers() {
@@ -433,6 +469,8 @@ void OptitrackMultiplexer::DeclareRosParameters() {
   declare_parameter<::std::string>("topic_unlabeled_markers",
                                    "unlabeled_markers");
   declare_parameter<bool>("verbose", true);
+  declare_parameter<bool>("publish_tf", true);
+  declare_parameter<::std::string>("world_frame", "world");
 }
 
 void OptitrackMultiplexer::InitializeRosParameters() {
@@ -448,6 +486,8 @@ void OptitrackMultiplexer::InitializeRosParameters() {
   get_parameter<::std::string>("topic_unlabeled_markers",
                                topic_unlabeled_markers_);
   get_parameter<bool>("verbose", verbose_);
+  get_parameter<bool>("publish_tf", publish_tf_);
+  get_parameter<::std::string>("world_frame", world_frame_);
 
   RCLCPP_INFO(get_logger(), "Rigid body names: %s", rigid_body_names.c_str());
 

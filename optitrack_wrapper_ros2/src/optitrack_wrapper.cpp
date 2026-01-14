@@ -35,22 +35,22 @@ OptitrackWrapper::OptitrackWrapper() : ::rclcpp::Node("optitrack_wrapper") {
           "~/" + topic_frame_data_, 0);
 }
 
-void OptitrackWrapper::SetupNatNet() { 
+void OptitrackWrapper::SetupNatNet() {
    // initialize client
    InitializeClient();
 
    // initialize client params
    InitializeClientParams();
- 
+
    // connect optitrack
    ConnectOptitrack();
- 
+
    // get data descriptions
    GetDataDescriptions();
- 
+
    // create data description message
    CreateDataDescriptionsMessage();
- 
+
    // initialize frame data msg
    frame_data_msg_ = ::optitrack_wrapper_ros2_msgs::msg::FrameOfMocapData();
 }
@@ -707,14 +707,14 @@ void OptitrackWrapper::ConnectOptitrack() {
       RCLCPP_INFO(get_logger(), "Error getting frame rate.");
 
     // get # of analog samples per mocap frame of data
-    ret = nat_net_client_->SendMessageAndWait("AnalogSamplesPerMocapFrame",
-                                              &p_result, &n_bytes);
-    if (ret == ErrorCode_OK) {
-      analog_samples_per_mocap_frame_ = *((int *)p_result);
-      RCLCPP_INFO(get_logger(), "Analog Samples Per Mocap Frame : %d",
-                  analog_samples_per_mocap_frame_);
-    } else
-      RCLCPP_ERROR(get_logger(), "Error getting Analog frame rate.");
+    // ret = nat_net_client_->SendMessageAndWait("AnalogSamplesPerMocapFrame",
+    //                                           &p_result, &n_bytes);
+    // if (ret == ErrorCode_OK) {
+    //   analog_samples_per_mocap_frame_ = *((int *)p_result);
+    //   RCLCPP_INFO(get_logger(), "Analog Samples Per Mocap Frame : %d",
+    //               analog_samples_per_mocap_frame_);
+    // } else
+    //   RCLCPP_ERROR(get_logger(), "Error getting Analog frame rate.");
   }
 }
 

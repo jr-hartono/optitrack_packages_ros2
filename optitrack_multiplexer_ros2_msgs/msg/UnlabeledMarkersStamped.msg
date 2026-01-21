@@ -4,12 +4,12 @@ builtin_interfaces/Time stamp
 # frame number
 int32 frame
 
-# unlabeled markers id: 
+# unlabeled markers id:
 # unlabeled markers can change IDs any time the trajectory is broken
 int32[] id
 
 # unlabeled markers position
-optitrack_wrapper_ros2_msgs/Point[] positions
+geometry_msgs/Point[] positions
 
 # pipeline total latency in ms just before publishing
 float64 latency_ms

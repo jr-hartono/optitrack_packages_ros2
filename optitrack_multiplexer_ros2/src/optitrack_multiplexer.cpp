@@ -219,7 +219,7 @@ void OptitrackMultiplexer::FrameDataCallback(
       ::optitrack_multiplexer_ros2_msgs::msg::RigidBodyStamped
           rigid_body_stamped_msg = rigid_body_stamped_msgs[i];
 
-      rigid_body_stamped_msg.stamp = capture_time;
+      rigid_body_stamped_msg.header.stamp = capture_time;
       rigid_body_stamped_msg.frame = frame_data->frame;
       rigid_body_stamped_msg.latency_ms = total_pipeline_latency;
 
